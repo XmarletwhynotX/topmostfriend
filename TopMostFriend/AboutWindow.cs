@@ -79,6 +79,15 @@ namespace TopMostFriend {
             creditButtonfff.Click += (s, e) => Process.Start(@"http://www.famfamfam.com/lab/icons/silk/");
 
             Controls.Add(creditButtonfff);
+
+            Controls.Add(new Label {
+                Text = Application.ProductVersion,
+                TextAlign = ContentAlignment.MiddleLeft,
+                AutoSize = true,
+                Location = new Point(127, 97),
+                BackColor = Color.Transparent,
+                ForeColor = Color.White,
+            });
         }
 
         protected override void OnMouseDown(MouseEventArgs e) {

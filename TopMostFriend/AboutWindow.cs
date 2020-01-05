@@ -60,10 +60,25 @@ namespace TopMostFriend {
             creditButton.FlatAppearance.BorderSize = 0;
             creditButton.FlatAppearance.MouseOverBackColor = Color.Transparent;
             creditButton.FlatAppearance.MouseDownBackColor = Color.Transparent;
-            creditButton.Location = new Point(ClientSize.Width - creditButton.Size.Width - GENERAL_PADDING, 60);
+            creditButton.Location = new Point(ClientSize.Width - creditButton.Size.Width - GENERAL_PADDING, 46);
             creditButton.Click += (s, e) => Process.Start(@"https://flash.moe");
 
-            Controls.Add(creditButton);
+            Button creditButtonfff = new Button {
+                Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top,
+                Text = string.Empty,
+                Size = new Size(300, 15),
+                TabIndex = ++tabIndex,
+                Cursor = Cursors.Hand,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.Transparent,
+            };
+            creditButtonfff.FlatAppearance.BorderSize = 0;
+            creditButtonfff.FlatAppearance.MouseOverBackColor = Color.Transparent;
+            creditButtonfff.FlatAppearance.MouseDownBackColor = Color.Transparent;
+            creditButtonfff.Location = new Point(ClientSize.Width - creditButtonfff.Size.Width - GENERAL_PADDING, 64);
+            creditButtonfff.Click += (s, e) => Process.Start(@"http://www.famfamfam.com/lab/icons/silk/");
+
+            Controls.Add(creditButtonfff);
         }
 
         protected override void OnMouseDown(MouseEventArgs e) {

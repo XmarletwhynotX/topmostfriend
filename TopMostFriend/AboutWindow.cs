@@ -45,7 +45,7 @@ namespace TopMostFriend {
                 TabIndex = ++tabIndex,
             };
             websiteButton.Location = new Point(closeButton.Left - websiteButton.Width - BUTTON_SPACING, closeButton.Top);
-            websiteButton.Click += (s, e) => Process.Start(@"https://flash.moe/utils#tmf");
+            websiteButton.Click += (s, e) => Process.Start(@"https://flash.moe/topmostfriend");
             Controls.Add(websiteButton);
 
             Button creditButton = new Button {

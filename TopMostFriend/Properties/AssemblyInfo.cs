@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("Provides a dingus that lets you make anything topmost.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("flashwave")]
-[assembly: AssemblyProduct("TopMostFriend.Properties")]
+[assembly: AssemblyProduct("TopMostFriend")]
 [assembly: AssemblyCopyright("flashwave 2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

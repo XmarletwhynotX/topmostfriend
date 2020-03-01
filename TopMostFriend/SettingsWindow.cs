@@ -25,6 +25,7 @@ namespace TopMostFriend {
 
         public readonly CheckBox FlAlwaysAdmin;
         public readonly CheckBox FlToggleNotification;
+        public readonly CheckBox FlShiftClickBlacklist;
 
         public SettingsWindow() {
             Text = @"Top Most Friend Settings";
@@ -32,7 +33,7 @@ namespace TopMostFriend {
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             AutoScaleMode = AutoScaleMode.Dpi;
-            ClientSize = new Size(410, 183);
+            ClientSize = new Size(410, 258);
             MinimizeBox = MaximizeBox = false;
             MinimumSize = MaximumSize = Size;
 
@@ -69,11 +70,17 @@ namespace TopMostFriend {
             GroupBox flagsGroup = new GroupBox {
                 Text = @"Flags",
                 Location = new Point(6, 76),
-                Size = new Size(Width - 18, 70),
+                Size = new Size(Width - 18, 90),
+            };
+
+            GroupBox blackListGroup = new GroupBox {
+                Text = @"Blacklists",
+                Location = new Point(6, 166),
+                Size = new Size(Width - 18, 55),
             };
 
             Controls.AddRange(new Control[] {
-                applyButton, cancelButton, okButton, hotKeyGroup, flagsGroup,
+                applyButton, cancelButton, okButton, hotKeyGroup, flagsGroup, blackListGroup,
             });
 
             Label toggleForegroundLabel = new Label {
@@ -88,12 +95,14 @@ namespace TopMostFriend {
             Button fgReset = new Button {
                 Text = @"Reset",
                 Location = new Point(hotKeyGroup.Width - 85, mod_y),
+                TabIndex = 105,
             };
             fgReset.Click += FgReset_Click;
 
             FgKey = new TextBox {
                 Text = ((Keys)(KeyCode >> 16)).ToString(),
                 Location = new Point(12, mod_y + 2),
+                TabIndex = 101,
             };
             FgKey.KeyDown += FgKey_KeyDown;
 
@@ -104,6 +113,7 @@ namespace TopMostFriend {
                 Appearance = Appearance.Button,
                 Size = new Size(50, 23),
                 TextAlign = ContentAlignment.MiddleCenter,
+                TabIndex = 102,
             };
             FgModCtrl.Click += FgModCtrl_Click;
 
@@ -114,6 +124,7 @@ namespace TopMostFriend {
                 Appearance = FgModCtrl.Appearance,
                 Size = FgModCtrl.Size,
                 TextAlign = FgModCtrl.TextAlign,
+                TabIndex = 103,
             };
             FgModAlt.Click += FgModAlt_Click;
 
@@ -124,6 +135,7 @@ namespace TopMostFriend {
                 Appearance = FgModCtrl.Appearance,
                 Size = FgModCtrl.Size,
                 TextAlign = FgModCtrl.TextAlign,
+                TabIndex = 104,
             };
             FgModShift.Click += FgModShift_Click;
 
@@ -136,15 +148,41 @@ namespace TopMostFriend {
                 Location = new Point(10, 20),
                 Checked = Settings.Get(Program.ALWAYS_ADMIN_SETTING, false),
                 AutoSize = true,
+                TabIndex = 201,
             };
             FlToggleNotification = new CheckBox {
                 Text = @"Show notification when using toggle hotkey",
                 Location = new Point(10, 40),
                 Checked = Settings.Get(Program.TOGGLE_BALLOON_SETTING, Program.ToggleBalloonDefault),
                 AutoSize = true,
+                TabIndex = 202,
+            };
+            FlShiftClickBlacklist = new CheckBox {
+                Text = @"SHIFT+CLICK items in the list to add to the blacklist",
+                Location = new Point(10, 60),
+                Checked = Settings.Get(Program.SHIFT_CLICK_BLACKLIST, true),
+                AutoSize = true,
+                TabIndex = 203,
             };
 
-            flagsGroup.Controls.AddRange(new[] { FlAlwaysAdmin, FlToggleNotification });
+            flagsGroup.Controls.AddRange(new[] { FlAlwaysAdmin, FlToggleNotification, FlShiftClickBlacklist, });
+
+            Button titleBlacklist = new Button {
+                Size = new Size(120, 23),
+                Location = new Point(10, 20),
+                Text = @"Title Blacklist",
+                TabIndex = 301,
+            };
+            titleBlacklist.Click += (s, e) => {
+                string[] newList = BlacklistWindow.Display(@"Title Blacklist", Program.GetBlacklistTitle());
+
+                if(newList != null) {
+                    Program.ApplyBlacklistTitle(newList);
+                    Program.SaveBlacklistTitle();
+                }
+            };
+
+            blackListGroup.Controls.AddRange(new[] { titleBlacklist });
         }
 
         private void FgReset_Click(object sender, EventArgs e) {
@@ -156,6 +194,8 @@ namespace TopMostFriend {
         public void Apply() {
             Settings.Set(Program.FOREGROUND_HOTKEY_SETTING, KeyCode);
             Settings.Set(Program.ALWAYS_ADMIN_SETTING, FlAlwaysAdmin.Checked);
+            Settings.Set(Program.TOGGLE_BALLOON_SETTING, FlToggleNotification.Checked);
+            Settings.Set(Program.SHIFT_CLICK_BLACKLIST, FlShiftClickBlacklist.Checked);
             Program.SetForegroundHotKey(KeyCode);
         }
 

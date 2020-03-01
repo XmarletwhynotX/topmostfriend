@@ -30,12 +30,15 @@ namespace TopMostFriend {
         public const string PROCESS_SEPARATOR_SETTING = @"InsertProcessSeparator";
         public const string LIST_SELF_SETTING = @"ListSelf";
         public const string SHOW_EMPTY_WINDOW_SETTING = @"ShowEmptyWindowTitles";
-        public const string SHOW_EXPLORER_SETTING = @"ShowExplorerMisc";
         public const string LIST_BACKGROUND_PATH_SETTING = @"ListBackgroundPath";
         public const string LIST_BACKGROUND_LAYOUT_SETTING = @"ListBackgroundLayout";
         public const string ALWAYS_ADMIN_SETTING = @"RunAsAdministrator";
         public const string TOGGLE_BALLOON_SETTING = @"ShowNotificationOnHotKey";
         public static readonly bool ToggleBalloonDefault = Environment.OSVersion.Version.Major < 10;
+        public const string SHIFT_CLICK_BLACKLIST = @"ShiftClickToBlacklist";
+        public const string TITLE_BLACKLIST = @"TitleBlacklist";
+
+        private static readonly List<string> TitleBlacklist = new List<string>();
 
         [STAThread]
         public static void Main(string[] args) {
@@ -62,6 +65,11 @@ namespace TopMostFriend {
 
             Settings.SetDefault(FOREGROUND_HOTKEY_SETTING, 0);
             Settings.SetDefault(ALWAYS_ADMIN_SETTING, false);
+            Settings.SetDefault(SHIFT_CLICK_BLACKLIST, true);
+            Settings.SetDefault(TITLE_BLACKLIST, new[] {
+                @"Program Manager",
+                @"Start",
+            });
             // Defaulting to false on Windows 10 because it uses the stupid, annoying and intrusive new Android style notification system
             // This would fucking piledrive the notification history and also just be annoying in general because intrusive
             Settings.SetDefault(TOGGLE_BALLOON_SETTING, ToggleBalloonDefault);
@@ -70,6 +78,12 @@ namespace TopMostFriend {
                 Elevate();
                 return;
             }
+
+            TitleBlacklist.Clear();
+            string[] titleBlacklist = Settings.Get(TITLE_BLACKLIST);
+
+            if (titleBlacklist != null)
+                ApplyBlacklistTitle(titleBlacklist);
 
             string backgroundPath = Settings.Get(LIST_BACKGROUND_PATH_SETTING, string.Empty);
             Image backgroundImage = null;
@@ -112,6 +126,33 @@ namespace TopMostFriend {
             Application.Run();
 
             Shutdown();
+        }
+
+        public static void AddBlacklistTitle(string title) {
+            lock (TitleBlacklist)
+                TitleBlacklist.Add(title);
+        }
+        public static void RemoveBlacklistTitle(string title) {
+            lock (TitleBlacklist)
+                TitleBlacklist.RemoveAll(x => x == title);
+        }
+        public static void ApplyBlacklistTitle(string[] arr) {
+            lock (TitleBlacklist) {
+                TitleBlacklist.Clear();
+                TitleBlacklist.AddRange(arr);
+            }
+        }
+        public static bool CheckBlacklistTitle(string title) {
+            lock (TitleBlacklist)
+                return TitleBlacklist.Contains(title);
+        }
+        public static string[] GetBlacklistTitle() {
+            lock (TitleBlacklist)
+                return TitleBlacklist.ToArray();
+        }
+        public static void SaveBlacklistTitle() {
+            lock (TitleBlacklist)
+                Settings.Set(TITLE_BLACKLIST, TitleBlacklist.ToArray());
         }
 
         public static void Shutdown() {
@@ -172,7 +213,7 @@ namespace TopMostFriend {
             Process lastProc = null;
             bool procSeparator = Settings.Get(PROCESS_SEPARATOR_SETTING, false);
             bool showEmptyTitles = Settings.Get(SHOW_EMPTY_WINDOW_SETTING, Debugger.IsAttached);
-            bool showExplorerMisc = Settings.Get(SHOW_EXPLORER_SETTING, Debugger.IsAttached);
+            bool shiftClickBlacklist = Settings.Get(SHIFT_CLICK_BLACKLIST, true);
 
             foreach(WindowEntry window in windows) {
                 if(procSeparator && lastProc != window.Process) {
@@ -187,9 +228,8 @@ namespace TopMostFriend {
                 if (!showEmptyTitles && string.IsNullOrEmpty(title))
                     continue;
 
-                // skip explorer things with specific titles, there's probably a much better way of doing this check
-                // and this will also probably only work properly on english windows but Fuck It what do you want from me
-                if (!showExplorerMisc && window.Process.ProcessName == @"explorer" && (title == @"Program Manager" || title == @"Start"))
+                // Skip items in the blacklist
+                if (CheckBlacklistTitle(title))
                     continue;
 
                 Image icon = GetWindowIcon(window.Window)?.ToBitmap() ?? null;
@@ -197,7 +237,13 @@ namespace TopMostFriend {
 
                 SysIcon.ContextMenuStrip.Items.Insert(0, new ToolStripMenuItem(
                     title, icon,
-                    new EventHandler((s, e) => SetTopMost(window.Window, !isTopMost))
+                    new EventHandler((s, e) => {
+                        if (shiftClickBlacklist && Control.ModifierKeys.HasFlag(Keys.Shift)) {
+                            AddBlacklistTitle(title);
+                            SaveBlacklistTitle();
+                        } else
+                            SetTopMost(window.Window, !isTopMost);
+                    })
                 ) {
                     CheckOnClick = true,
                     Checked = isTopMost,

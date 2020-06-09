@@ -81,29 +81,103 @@ namespace TopMostFriend {
                 ClientSize = AddButton.ClientSize,
                 TabIndex = 10001,
             };
-            AcceptButton = new Button {
+            Button acceptButton = new Button {
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
                 Text = @"Done",
                 Location = new Point(SPACING, ClientSize.Height - ((AddButton.ClientSize.Height + SPACING) * 2)),
                 ClientSize = AddButton.ClientSize,
                 TabIndex = 10002,
             };
+            acceptButton.Click += AcceptButton_Click;
 
             Controls.AddRange(new Control[] {
-                BlacklistView, AddButton, EditButton, RemoveButton, (Control)AcceptButton, (Control)CancelButton,
+                BlacklistView, AddButton, EditButton, RemoveButton, (Control)(AcceptButton = acceptButton), (Control)CancelButton,
             });
 
             RefreshList();
         }
 
+        private void AcceptButton_Click(object sender, EventArgs e) {
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+
+        private class BlacklistEditorWindow : Form {
+            public string Original { get; }
+            public string String { get => TextBox.Text; }
+
+            private TextBox TextBox;
+
+            public BlacklistEditorWindow(string original = null) {
+                Original = original ?? string.Empty;
+                Text = original == null ? @"Adding new entry..." : $@"Editing {original}...";
+                StartPosition = FormStartPosition.CenterParent;
+                FormBorderStyle = FormBorderStyle.FixedToolWindow;
+                ClientSize = new Size(500, 39);
+                MaximizeBox = MinimizeBox = false;
+                MaximumSize = MinimumSize = Size;
+
+                Button cancelButton = new Button {
+                    Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right,
+                    Location = new Point(ClientSize.Width - 75 - 8, 8),
+                    Name = @"cancelButton",
+                    Size = new Size(75, 23),
+                    TabIndex = 102,
+                    Text = @"Cancel",
+                };
+                cancelButton.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
+
+                Button saveButton = new Button {
+                    Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right,
+                    Location = new Point(cancelButton.Location.X - 75 - 5, cancelButton.Location.Y),
+                    Name = @"saveButton",
+                    Size = new Size(75, 23),
+                    TabIndex = 101,
+                    Text = @"Save",
+                };
+                saveButton.Click += (s, e) => { DialogResult = DialogResult.OK; Close(); };
+
+                TextBox = new TextBox {
+                    Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                    Location = new Point(8, 9),
+                    Name = @"deviceSelection",
+                    Size = new Size(ClientSize.Width - 8 - cancelButton.Width - saveButton.Width - 19, 23),
+                    TabIndex = 100,
+                    Text = Original,
+                };
+
+                AcceptButton = saveButton;
+                CancelButton = cancelButton;
+
+                Controls.AddRange(new Control[] {
+                    TextBox, saveButton, cancelButton,
+                });
+            }
+        }
+
         private void AddButton_Click(object sender, EventArgs e) {
-            // open editor window
+            using (BlacklistEditorWindow bew = new BlacklistEditorWindow()) {
+                if (bew.ShowDialog() == DialogResult.OK)
+                    SafeAdd(bew.String);
+            }
+
             RefreshList();
         }
 
         private void EditButton_Click(object sender, EventArgs e) {
-            // open editor window with thing loaded in
+            using (BlacklistEditorWindow bew = new BlacklistEditorWindow(BlacklistView.SelectedItem as string)) {
+                if (bew.ShowDialog() == DialogResult.OK) {
+                    Blacklist.Remove(bew.Original);
+                    SafeAdd(bew.String);
+                }
+            }
+
             RefreshList();
+        }
+
+        private void SafeAdd(string str) {
+            if (!Blacklist.Contains(str))
+                Blacklist.Add(str);
         }
 
         private void RemoveButton_Click(object sender, EventArgs e) {

@@ -73,13 +73,23 @@ namespace TopMostFriend {
             Settings.SetDefault(ALWAYS_ADMIN_SETTING, false);
             Settings.SetDefault(SHIFT_CLICK_BLACKLIST, true);
             Settings.SetDefault(SHOW_HOTKEY_ICON, true);
-            Settings.SetDefault(TITLE_BLACKLIST, new[] {
-                @"Program Manager",
-                @"Start",
-            });
             // Defaulting to false on Windows 10 because it uses the stupid, annoying and intrusive new Android style notification system
             // This would fucking piledrive the notification history and also just be annoying in general because intrusive
             Settings.SetDefault(TOGGLE_BALLOON_SETTING, ToggleBalloonDefault);
+
+            if(!Settings.Has(TITLE_BLACKLIST)) {
+                List<string> titles = new List<string> { @"Program Manager" };
+
+                if(Environment.OSVersion.Version.Major >= 10)
+                    titles.Add(@"Windows Shell Experience Host");
+
+                if (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor >= 2)
+                    titles.Add(@"Start menu");
+                else if(Environment.OSVersion.Version.Major > 6 || (Environment.OSVersion.Version.Major < 6 && Environment.OSVersion.Version.Minor < 2))
+                    titles.Add(@"Start");
+
+                Settings.Set(TITLE_BLACKLIST, titles.ToArray());
+            }
 
             if (Settings.Get<bool>(ALWAYS_ADMIN_SETTING) && !IsElevated()) {
                 Elevate();

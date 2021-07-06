@@ -44,6 +44,7 @@
     <Compile Include="AboutWindow.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="ActionTimeout.cs" />
     <Compile Include="BlacklistWindow.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -61,6 +62,7 @@
     <Compile Include="SettingsWindow.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="UAC.cs" />
     <Compile Include="Win32.cs" />
     <Compile Include="WindowInfo.cs" />
   </ItemGroup>

@@ -29,6 +29,8 @@ namespace TopMostFriend {
         public readonly CheckBox FlShiftClickBlacklist;
         public readonly CheckBox FlShowHotkeyIcon;
         public readonly CheckBox FlShowWindowList;
+        public readonly CheckBox FlAlwaysRetryAsAdmin;
+        public readonly CheckBox FlRevertOnExit;
 
         public SettingsWindow() {
             Text = @"Top Most Friend Settings";
@@ -36,7 +38,7 @@ namespace TopMostFriend {
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             AutoScaleMode = AutoScaleMode.Dpi;
-            ClientSize = new Size(430, 298);
+            ClientSize = new Size(430, 348);
             MinimizeBox = MaximizeBox = false;
             MinimumSize = MaximumSize = Size;
 
@@ -72,13 +74,13 @@ namespace TopMostFriend {
 
             GroupBox flagsGroup = new GroupBox {
                 Text = @"Flags",
-                Location = new Point(6, 76),
-                Size = new Size(Width - 18, 130),
+                Location = new Point(6, 80),
+                Size = new Size(Width - 18, 170),
             };
 
             GroupBox blackListGroup = new GroupBox {
                 Text = @"Blacklist",
-                Location = new Point(6, 206),
+                Location = new Point(6, 254),
                 Size = new Size(Width - 18, 55),
             };
 
@@ -193,10 +195,25 @@ namespace TopMostFriend {
                 AutoSize = true,
                 TabIndex = 205,
             };
+            FlAlwaysRetryAsAdmin = new CheckBox {
+                Text = @"Always retry changing top most status as administrator on first failure",
+                Location = new Point(10, 120),
+                Checked = Settings.Get(Program.ALWAYS_RETRY_ELEVATED, false),
+                AutoSize = true,
+                TabIndex = 206,
+            };
+            FlRevertOnExit = new CheckBox {
+                Text = @"Revert status to before top most friend altered them on exit",
+                Location = new Point(10, 140),
+                Checked = Settings.Get(Program.REVERT_ON_EXIT, false),
+                AutoSize = true,
+                TabIndex = 207,
+            };
 
             flagsGroup.Controls.AddRange(new[] {
                 FlAlwaysAdmin, FlToggleNotification, FlShiftClickBlacklist,
-                FlShowHotkeyIcon, FlShowWindowList,
+                FlShowHotkeyIcon, FlShowWindowList, FlAlwaysRetryAsAdmin,
+                FlRevertOnExit,
             });
 
             Button titleBlacklist = new Button {
@@ -230,6 +247,8 @@ namespace TopMostFriend {
             Settings.Set(Program.SHIFT_CLICK_BLACKLIST, FlShiftClickBlacklist.Checked);
             Settings.Set(Program.SHOW_HOTKEY_ICON, FlShowHotkeyIcon.Checked);
             Settings.Set(Program.SHOW_WINDOW_LIST, FlShowWindowList.Checked);
+            Settings.Set(Program.ALWAYS_RETRY_ELEVATED, FlAlwaysRetryAsAdmin.Checked);
+            Settings.Set(Program.REVERT_ON_EXIT, FlRevertOnExit.Checked);
             Program.SetForegroundHotKey(KeyCode);
         }
 

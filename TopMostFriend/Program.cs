@@ -16,6 +16,8 @@ namespace TopMostFriend {
         private static HotKeyWindow HotKeys;
         private static Icon OriginalIcon;
 
+        public const string TITLE = @"Top Most Friend";
+
         private const string GUID =
 #if DEBUG
             @"{1A22D9CA-2AA9-48F2-B007-3A48CF205CDD}";
@@ -23,6 +25,8 @@ namespace TopMostFriend {
             @"{5BE25191-E1E2-48A7-B038-E986CD989E91}";
 #endif
         private static readonly Mutex GlobalMutex = new Mutex(true, GUID);
+
+        private const string CUSTOM_LANGUAGE = @"TopMostFriendLanguage.xml";
 
         public const string FOREGROUND_HOTKEY_ATOM = @"{86795D64-770D-4BD6-AA26-FA638FBAABCF}";
 #if DEBUG
@@ -46,6 +50,7 @@ namespace TopMostFriend {
         public const string LAST_VERSION = @"LastVersion";
         public const string ALWAYS_RETRY_ELEVATED = @"AlwaysRetryElevated";
         public const string REVERT_ON_EXIT = @"RevertOnExit";
+        public const string LANGUAGE = @"Language";
 
         private static ToolStripItem RefreshButton;
         private static ToolStripItem LastSelectedItem = null;
@@ -118,8 +123,20 @@ namespace TopMostFriend {
             if(args.Contains(@"--stop"))
                 return 0;
 
+            if(File.Exists(CUSTOM_LANGUAGE)) {
+                string customLanguage;
+                using(Stream s = File.OpenRead(CUSTOM_LANGUAGE))
+                    try {
+                        customLanguage = Locale.LoadLanguage(s);
+                    } catch {
+                        customLanguage = Locale.DEFAULT;
+                    }
+                Locale.SetLanguage(customLanguage);
+            } else
+                Locale.SetLanguage(Locale.GetPreferredLanguage());
+
             if(!GlobalMutex.WaitOne(0, true)) {
-                MessageBox.Show(@"An instance of Top Most Friend is already running.", @"Top Most Friend");
+                MessageBox.Show(Locale.String(@"AlreadyRunning"), TITLE, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return -1;
             }
 
@@ -182,19 +199,19 @@ namespace TopMostFriend {
             CtxMenu.ItemClicked += CtxMenu_ItemClicked;
             ListActionItems = new ToolStripItem[] {
                 new ToolStripSeparator(),
-                RefreshButton = new ToolStripMenuItem(@"&Refresh", Properties.Resources.arrow_refresh, new EventHandler((s, e) => RefreshWindowList())),
+                RefreshButton = new ToolStripMenuItem(Locale.String(@"TrayRefresh"), Properties.Resources.arrow_refresh, new EventHandler((s, e) => RefreshWindowList())),
             };
             AppActionItems = new ToolStripItem[] {
-                new ToolStripMenuItem(@"&Settings", Properties.Resources.cog, new EventHandler((s, e) => SettingsWindow.Display())),
-                new ToolStripMenuItem(@"&About", Properties.Resources.help, new EventHandler((s, e) => AboutWindow.Display())),
-                new ToolStripMenuItem(@"&Quit", Properties.Resources.door_in, new EventHandler((s, e) => Application.Exit())),
+                new ToolStripMenuItem(Locale.String(@"TraySettings"), Properties.Resources.cog, new EventHandler((s, e) => SettingsWindow.Display())),
+                new ToolStripMenuItem(Locale.String(@"TrayAbout"), Properties.Resources.help, new EventHandler((s, e) => AboutWindow.Display())),
+                new ToolStripMenuItem(Locale.String(@"TrayQuit"), Properties.Resources.door_in, new EventHandler((s, e) => Application.Exit())),
             };
             CtxMenu.Items.AddRange(AppActionItems);
 
             SysIcon = new NotifyIcon {
                 Visible = true,
                 Icon = OriginalIcon,
-                Text = @"Top Most Application Manager",
+                Text = TITLE,
             };
             SysIcon.ContextMenuStrip = CtxMenu;
             SysIcon.MouseDown += SysIcon_MouseDown;
@@ -203,7 +220,7 @@ namespace TopMostFriend {
             SetForegroundHotKey(Settings.Get<int>(FOREGROUND_HOTKEY_SETTING));
 
             if(isFirstRun)
-                MessageBox.Show(@"OOBE goes here");
+                FirstRunWindow.Display();
 
             Application.Run();
 
@@ -337,14 +354,14 @@ namespace TopMostFriend {
             if(!retryElevated) {
                 MessageBoxButtons buttons = MessageBoxButtons.OK;
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine(@"Wasn't able to change topmost status on this window.");
+                sb.AppendLine(Locale.String(@"ErrUnableAlterStatus1"));
 
                 if(!isElevated) {
-                    sb.AppendLine(@"Do you want to try again as an Administrator? A User Account Control dialog will pop up after selecting Yes.");
+                    sb.AppendLine(Locale.String(@"ErrUnableAlterStatus2"));
                     buttons = MessageBoxButtons.YesNo;
                 }
 
-                retryElevated = MessageBox.Show(sb.ToString(), @"Top Most Friend", buttons, MessageBoxIcon.Error) == DialogResult.Yes;
+                retryElevated = MessageBox.Show(sb.ToString(), TITLE, buttons, MessageBoxIcon.Error) == DialogResult.Yes;
             }
 
             if(retryElevated) {
@@ -352,7 +369,7 @@ namespace TopMostFriend {
                     if(!OriginalStates.ContainsKey(window.Handle))
                         OriginalStates[window.Handle] = !window.IsTopMost;
                 } else
-                    MessageBox.Show(@"Top Most Friend was still unable to change topmost status for the window. It might be protected by Windows.", @"Top Most Friend", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(Locale.String(@"ErrUnableAlterStatusProtected"), TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -365,8 +382,8 @@ namespace TopMostFriend {
                 if(Settings.Get(TOGGLE_BALLOON_SETTING, false)) {
                     string title = window.Title;
                     SysIcon?.ShowBalloonTip(
-                        2000, window.IsTopMost ? @"Always on top" : @"No longer always on top",
-                        string.IsNullOrEmpty(title) ? @"Window has no title." : title,
+                        2000, Locale.String(window.IsTopMost ? @"NotifyOnTop" : @"NotifyNoLonger"),
+                        string.IsNullOrEmpty(title) ? Locale.String(@"NotifyNoTitle") : title,
                         ToolTipIcon.Info
                     );
                 }
